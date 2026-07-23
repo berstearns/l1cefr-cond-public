@@ -1,0 +1,44 @@
+# l1cefr-cond — L1 x CEFR-conditioned learner-text generation.
+# Package layout: the algebraic domain model (domain/) + the train/eval
+# experiment binaries (l1cefr_cond/). See CLAUDE.md / RULES.md / the scaffold.
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "l1cefr_cond"
+version = "0.0.0"
+description = "L1 x CEFR-conditioned learner-text generation: algebraic domain model + train/eval experiment binaries."
+requires-python = ">=3.10"
+
+# Dependencies are intentionally MINIMAL (stdlib-first — the domain model is
+# ~20 lines of stdlib: NewType + frozen dataclasses + match/assert_never).
+# NO new runtime dependency lands without a plan section justifying it:
+#   auto-rules/code-shape/no-new-dependencies-without-a-plan-section-justifying-the-add.md
+# peft / axolotl / trl / errant arrive only when a specific technique/eval
+# binary [T##]/[E##] needs them — not before. torch + transformers land here
+# for T01 (control-token continual pretrain, the first real train step).
+# torch itself is installed separately from the CPU-only wheel index
+# (https://download.pytorch.org/whl/cpu) — NOT declared below — so it never
+# resolves to the multi-GB default CUDA wheel from PyPI on a disk-constrained box.
+dependencies = [
+  # assert_never backport for the 3.10 target (stdlib typing.assert_never is 3.11+).
+  "typing_extensions>=4.4; python_version < '3.11'",
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["mypy>=1.8", "pytest>=7.0", "types-PyYAML"]
+train = ["transformers==5.14.0"]  # F22 repro-provenance: exact pin, not a floor
+
+[project.scripts]
+l1cefr-train = "l1cefr_cond.train:main"
+l1cefr-eval = "l1cefr_cond.eval:main"
+
+[tool.setuptools]
+# Flat layout: hand-listed importable packages (the repo root also holds
+# markdown-only planning dirs that are NOT importable packages). The two
+# notebook subpackages are the gen-gec-errant graft (nb) + the LM-head
+# conditioning strategies (lmhead) — see specs/96-lm-head-notebook-pairs.md.
+packages = ["domain", "l1cefr_cond", "l1cefr_cond.nb", "l1cefr_cond.lmhead"]
